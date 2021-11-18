@@ -34,7 +34,6 @@ async function init() {
     handleProgressSelectorChange(e.target.value, kommuneLayer)
   );
 
-  console.debug(progressSelectorRef);
   handleProgressSelectorChange(progressSelectorRef.value, kommuneLayer);
 }
 
@@ -61,7 +60,7 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
     case "stedsnavn":
       break;
     default:
-      console.debug(`${progressToVisualize} is not supported`);
+      console.error(`${progressToVisualize} is not supported`);
       break;
   }
 }
@@ -95,7 +94,7 @@ function renderKommuner(kommuner) {
  * @param {Object} progress
  * @param {string} progressColumn
  * @param {bool} reverseScale
- * @return {{[id: string]: number}}
+ * @return {{[id: string]: KommuneProgress}}
  */
 function getKommuneProgress(progress, progressColumn, reverseScale = false) {
   /**@type {{[id: string]: number}} */
@@ -103,9 +102,10 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
 
   for (const kommune of progress) {
     const progressAsNumber = Number(kommune[progressColumn].match(/\d+/)[0]);
-    kommuneIdToProgress[kommune.Id] = reverseScale
-      ? 100 - progressAsNumber
-      : progressAsNumber;
+    kommuneIdToProgress[kommune.Id] = {
+      ...kommune,
+      progress: reverseScale ? 100 - progressAsNumber : progressAsNumber,
+    };
   }
 
   return kommuneIdToProgress;
@@ -113,16 +113,24 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
 
 /**
  * @param {L.geoJson} kommuneLayer
- * @param {{[id: string]: KommuneProgress}} kommuneProgress
+ * @param {{[id: string]: KommuneProgress}} kommuner
  */
-function renderKommuneProgress(kommuneLayer, kommuneProgress) {
+function renderKommuneProgress(kommuneLayer, kommuner) {
   kommuneLayer.eachLayer((layer) => {
     const kommuneId = layer.feature.properties.kommunenummer;
-    const progress = kommuneProgress[kommuneId];
+    const kommune = kommuner[kommuneId];
+    const progress = kommune.progress;
+    layer.feature.properties.progress = progress;
     layer.setStyle({
       fillColor: getColor(progress),
       color: getColor(progress),
     });
+    layer.bindPopup(`
+    <div class="popup">
+      <h1>${kommune.Municipality}</h1>
+      <p>${JSON.stringify(kommune, null, "\t")}</p>
+    </div>
+    `);
   });
 }
 
@@ -132,9 +140,12 @@ function renderKommuneProgress(kommuneLayer, kommuneProgress) {
  * @returns {string} Color from red to green as hsl
  */
 function getColor(value) {
-  //value from 0 to 1
-  var hue = ((1 - value) * 120).toString(10);
-  return ["hsl(", hue, ",100%,50%)"].join("");
+  if (value <= 0.19) return "#ED1B2A";
+  else if (value <= 0.39) return "#ED1B2A";
+  else if (value <= 0.59) return "#F8B02C";
+  else if (value <= 0.79) return "#FFD51F";
+  else if (value <= 0.99) return "#BBCD5A";
+  else return "#008B5A";
 }
 
 /**
@@ -228,6 +239,12 @@ function parseHTMLTableElem(tableEl) {
  * @property {string} features.properties.kommunenummer
  * @property {string} features.type
  * @property {string} type
+ */
+
+/**
+ * @typedef {object} KommuneProgress
+ * @property {number} progress
+ * @property {any} [alleAndreProps]
  */
 
 /**
