@@ -1,0 +1,21 @@
+body {
+  padding: 0;
+  margin: 0;
+}
+
+#map {
+  width: 100vw;
+  height: 100vh;
+}
+
+#selector {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 300px;
+  height: 400px;
+  z-index: 1000;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+}
