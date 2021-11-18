@@ -54,7 +54,8 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
       const progress = await getNVDBManglerProgress();
       renderKommuneProgress(
         kommuneLayer,
-        getKommuneProgress(progress, "Percent_missing", true)
+        getKommuneProgress(progress, "Percent_missing", true),
+        getNVDBProgressColor
       );
       break;
     case "stedsnavn":
@@ -140,7 +141,7 @@ function renderKommuneProgress(
 }
 
 /**
- *
+ * Get progress color based on https://wiki.openstreetmap.org/wiki/Template:Progress
  * @param {number} value from 0 to 1
  * @returns {string} Color from red to green as hsl
  */
@@ -159,14 +160,16 @@ function getProgressColor(value) {
  * @returns {string} Color from red to green as hsl
  */
 function getNVDBProgressColor(value) {
-  if (value <= 90) return "#ED1B2A";
+  console.debug(value);
   // red
-  else if (value < 93) return "#F8B02C";
+  if (value <= 90) return "#ED1B2A";
   // dark orange
-  else if (value < 95) return "#FFD51F";
+  else if (value < 93) return "#F8B02C";
   // light orange
-  else if (value < 98) return "#BBCD5A";
+  else if (value < 95) return "#FFD51F";
   // yellow
+  else if (value < 98) return "#BBCD5A";
+  // green
   else return "#008B5A"; // green
 }
 
