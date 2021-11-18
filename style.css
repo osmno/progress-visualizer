@@ -1,6 +1,7 @@
 body {
   padding: 0;
   margin: 0;
+  font-family: "Roboto", "Open Sans", Arial, sans-serif;
 }
 
 #map {
@@ -12,9 +13,21 @@ body {
   position: absolute;
   top: 10px;
   left: 10px;
-  width: 300px;
+  max-width: 80%;
   z-index: 1000;
   background-color: #fff;
   padding: 5px;
   border-radius: 10px;
+}
+
+h1 {
+  font-size: 24px;
+  margin: 8px 0 8px 0;
+}
+
+.popup h2 {
+  margin-bottom: 8px;
+}
+.popup p {
+  margin: 4px 0 4px 0;
 }

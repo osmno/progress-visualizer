@@ -133,8 +133,10 @@ function renderKommuneProgress(
     });
     layer.bindPopup(`
     <div class="popup">
-      <h1>${kommune.Municipality}</h1>
-      <p>${JSON.stringify(kommune, null, "\t")}</p>
+      <h2>${kommune.Municipality}</h2>
+      ${Object.keys(kommune)
+        .map((key) => `<p><b>${key}:</b> ${kommune[key]}</p>`)
+        .join("")}
     </div>
     `);
   });
