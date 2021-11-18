@@ -114,16 +114,21 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
 /**
  * @param {L.geoJson} kommuneLayer
  * @param {{[id: string]: KommuneProgress}} kommuner
+ * @param {function(number): string} colorFunction
  */
-function renderKommuneProgress(kommuneLayer, kommuner) {
+function renderKommuneProgress(
+  kommuneLayer,
+  kommuner,
+  colorFunction = getProgressColor
+) {
   kommuneLayer.eachLayer((layer) => {
     const kommuneId = layer.feature.properties.kommunenummer;
     const kommune = kommuner[kommuneId];
     const progress = kommune.progress;
     layer.feature.properties.progress = progress;
     layer.setStyle({
-      fillColor: getColor(progress),
-      color: getColor(progress),
+      fillColor: colorFunction(progress),
+      color: colorFunction(progress),
     });
     layer.bindPopup(`
     <div class="popup">
@@ -139,13 +144,30 @@ function renderKommuneProgress(kommuneLayer, kommuner) {
  * @param {number} value from 0 to 1
  * @returns {string} Color from red to green as hsl
  */
-function getColor(value) {
-  if (value <= 0.19) return "#ED1B2A";
-  else if (value <= 0.39) return "#ED1B2A";
-  else if (value <= 0.59) return "#F8B02C";
-  else if (value <= 0.79) return "#FFD51F";
-  else if (value <= 0.99) return "#BBCD5A";
+function getProgressColor(value) {
+  if (value <= 19) return "#ED1B2A";
+  else if (value <= 39) return "#ED1B2A";
+  else if (value <= 59) return "#F8B02C";
+  else if (value <= 79) return "#FFD51F";
+  else if (value <= 99) return "#BBCD5A";
   else return "#008B5A";
+}
+
+/**
+ *
+ * @param {number} value from 0 to 1
+ * @returns {string} Color from red to green as hsl
+ */
+function getNVDBProgressColor(value) {
+  if (value <= 90) return "#ED1B2A";
+  // red
+  else if (value < 93) return "#F8B02C";
+  // dark orange
+  else if (value < 95) return "#FFD51F";
+  // light orange
+  else if (value < 98) return "#BBCD5A";
+  // yellow
+  else return "#008B5A"; // green
 }
 
 /**
