@@ -39,10 +39,13 @@ async function init() {
 
 /**
  *
- * @param {{"building" | "nvdb" | "stedsnavn"}} progressToVisualize
+ * @param {{"building" | "nvdb" | "n50"}} progressToVisualize
  */
 async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
   try {
+    const kommuner = await getKommuner();
+    /** @type {L.geoJSON} */
+    const kommuneLayer = renderKommuner(kommuner);
     document.getElementById("error").innerHTML = "Laster...";
     switch (progressToVisualize) {
       case "building":
@@ -60,7 +63,12 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
           getNVDBProgressColor
         );
         break;
-      case "stedsnavn":
+      case "n50":
+        const n50Progress = await getN50Progress();
+        renderKommuneProgress(
+          kommuneLayer,
+          getKommuneProgress(n50Progress, "Progresjon_arealdekke")
+        );
         break;
       default:
         console.error(`${progressToVisualize} is not supported`);
@@ -89,10 +97,10 @@ function renderProgress(progress) {
 function renderKommuner(kommuner) {
   return L.geoJSON(kommuner, {
     style: {
-      color: "#ff0000",
+      color: "#999",
       weight: 1,
       fillColor: "#fff",
-      fillOpacity: 0.1,
+      fillOpacity: 0.01,
     },
   }).addTo(map);
 }
@@ -109,7 +117,11 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
   const kommuneIdToProgress = {};
 
   for (const kommune of progress) {
-    const progressAsNumber = Number(kommune[progressColumn]?.match(/\d+/)[0]);
+    const numberMatches = kommune[progressColumn]?.match(/\d+/);
+    let progressAsNumber = 0;
+    if (numberMatches && numberMatches.length > 0) {
+      progressAsNumber = Number(numberMatches[0]);
+    }
     kommuneIdToProgress[kommune.Id] = {
       ...kommune,
       progress: reverseScale ? 100 - progressAsNumber : progressAsNumber,
@@ -129,15 +141,17 @@ function renderKommuneProgress(
   kommuner,
   colorFunction = getProgressColor
 ) {
+  console.debug(kommuneLayer, kommuner);
   kommuneLayer.eachLayer((layer) => {
     const kommuneId = layer.feature.properties.kommunenummer;
-    const kommune = kommuner[kommuneId];
+    const kommune = kommuner[kommuneId] ?? kommuner[Number(kommuneId)];
     if (kommune) {
       const progress = kommune.progress;
       layer.feature.properties.progress = progress;
       layer.setStyle({
         fillColor: colorFunction(progress),
         color: colorFunction(progress),
+        fillOpacity: 0.1,
       });
       layer.bindPopup(`
       <div class="popup">
@@ -148,7 +162,9 @@ function renderKommuneProgress(
       </div>
       `);
     } else {
-      console.error(`Could not find kommune with id: ${kommuneId}`);
+      console.error(
+        `Could not find kommune with id: ${kommuneId}, length of id: ${kommuneId.length}`
+      );
     }
   });
 }
@@ -212,6 +228,22 @@ function getNVDBManglerProgress() {
   return convertWikiToJson(
     "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Road_import_(Norway)/Update"
   );
+}
+
+/**
+ * @return {Promise<Object[]>}
+ */
+async function getN50Progress() {
+  const data = await convertWikiToJson(
+    "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Topography_import_for_Norway/assignment"
+  );
+
+  data.forEach((kommune) => {
+    kommune.Id = kommune["Kommune-nummer"];
+    kommune.Municipality = kommune["Kommunenavn"];
+  });
+
+  return data;
 }
 
 /**
