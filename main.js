@@ -42,27 +42,34 @@ async function init() {
  * @param {{"building" | "nvdb" | "stedsnavn"}} progressToVisualize
  */
 async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
-  switch (progressToVisualize) {
-    case "building":
-      const buildingImportProgress = await getBuildingImportProgress();
-      renderKommuneProgress(
-        kommuneLayer,
-        getKommuneProgress(buildingImportProgress, "Polygon_progress")
-      );
-      break;
-    case "nvdb":
-      const progress = await getNVDBManglerProgress();
-      renderKommuneProgress(
-        kommuneLayer,
-        getKommuneProgress(progress, "Percent_missing", true),
-        getNVDBProgressColor
-      );
-      break;
-    case "stedsnavn":
-      break;
-    default:
-      console.error(`${progressToVisualize} is not supported`);
-      break;
+  try {
+    document.getElementById("error").innerHTML = "Laster...";
+    switch (progressToVisualize) {
+      case "building":
+        const buildingImportProgress = await getBuildingImportProgress();
+        renderKommuneProgress(
+          kommuneLayer,
+          getKommuneProgress(buildingImportProgress, "Polygon_progress")
+        );
+        break;
+      case "nvdb":
+        const progress = await getNVDBManglerProgress();
+        renderKommuneProgress(
+          kommuneLayer,
+          getKommuneProgress(progress, "Percent_missing", true),
+          getNVDBProgressColor
+        );
+        break;
+      case "stedsnavn":
+        break;
+      default:
+        console.error(`${progressToVisualize} is not supported`);
+        break;
+    }
+    document.getElementById("error").innerHTML = "";
+  } catch (error) {
+    document.getElementById("error").innerHTML = error.message;
+    console.error(error);
   }
 }
 
@@ -102,7 +109,7 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
   const kommuneIdToProgress = {};
 
   for (const kommune of progress) {
-    const progressAsNumber = Number(kommune[progressColumn].match(/\d+/)[0]);
+    const progressAsNumber = Number(kommune[progressColumn]?.match(/\d+/)[0]);
     kommuneIdToProgress[kommune.Id] = {
       ...kommune,
       progress: reverseScale ? 100 - progressAsNumber : progressAsNumber,
@@ -125,20 +132,24 @@ function renderKommuneProgress(
   kommuneLayer.eachLayer((layer) => {
     const kommuneId = layer.feature.properties.kommunenummer;
     const kommune = kommuner[kommuneId];
-    const progress = kommune.progress;
-    layer.feature.properties.progress = progress;
-    layer.setStyle({
-      fillColor: colorFunction(progress),
-      color: colorFunction(progress),
-    });
-    layer.bindPopup(`
-    <div class="popup">
-      <h2>${kommune.Municipality}</h2>
-      ${Object.keys(kommune)
-        .map((key) => `<p><b>${key}:</b> ${kommune[key]}</p>`)
-        .join("")}
-    </div>
-    `);
+    if (kommune) {
+      const progress = kommune.progress;
+      layer.feature.properties.progress = progress;
+      layer.setStyle({
+        fillColor: colorFunction(progress),
+        color: colorFunction(progress),
+      });
+      layer.bindPopup(`
+      <div class="popup">
+        <h2>${kommune.Municipality}</h2>
+        ${Object.keys(kommune)
+          .map((key) => `<p><b>${key}:</b> ${kommune[key]}</p>`)
+          .join("")}
+      </div>
+      `);
+    } else {
+      console.error(`Could not find kommune with id: ${kommuneId}`);
+    }
   });
 }
 
@@ -162,7 +173,6 @@ function getProgressColor(value) {
  * @returns {string} Color from red to green as hsl
  */
 function getNVDBProgressColor(value) {
-  console.debug(value);
   // red
   if (value <= 90) return "#ED1B2A";
   // dark orange
@@ -210,8 +220,14 @@ function getNVDBManglerProgress() {
  * @returns
  */
 async function convertWikiToJson(url) {
+  // const resp = await fetch(
+  //   `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+  // );
   const resp = await fetch(
-    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+    `https://production.osmno-cors-proxy.mathiash98.workers.dev/${url.replace(
+      "https://wiki.openstreetmap.org/",
+      ""
+    )}`
   );
 
   if (resp.ok) {
@@ -225,6 +241,8 @@ async function convertWikiToJson(url) {
     const tableAsJson = parseHTMLTableElem(progressTable);
     console.dir(tableAsJson);
     return tableAsJson;
+  } else {
+    throw new Error(resp.statusText);
   }
 }
 
@@ -235,7 +253,7 @@ async function convertWikiToJson(url) {
  */
 function parseHTMLTableElem(tableEl) {
   const columns = Array.from(tableEl.querySelectorAll("th")).map((it) =>
-    it.textContent.replace(/\\n/g, "").replace(/\s/g, "_")
+    it.textContent.trim().replace(/\\n/g, "").replace(/\s/g, "_").trim()
   );
   const rows = tableEl.querySelectorAll("tbody > tr");
   const tableAsJson = [];
@@ -245,7 +263,7 @@ function parseHTMLTableElem(tableEl) {
     for (let i = 0; i < columns.length; i++) {
       const cell = cells[i];
       if (cell && cell.textContent) {
-        rowObject[columns[i]] = cell.textContent.replace(/\\n/g, "");
+        rowObject[columns[i]] = cell.textContent.replace(/\\n/g, "").trim();
       }
     }
     if (Object.keys(rowObject).length > 0) {

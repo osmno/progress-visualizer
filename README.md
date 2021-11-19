@@ -8,4 +8,4 @@ Visualizing progress of various projects in the norwegian mapping community
 - OpenStreetMap https://www.openstreetmap.org/
 - Leaflet https://leafletjs.com/reference.html
 - Mapbox https://www.mapbox.com/
-- Cors anywhere helper: Allorigins https://allorigins.win/
+- CorsFlare https://github.com/Darkseal/CORSflare for proxying requests to the wiki sites and bypass cors
