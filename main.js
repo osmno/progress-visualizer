@@ -8,7 +8,7 @@ L.control
   })
   .addTo(map);
 
-L.tileLayer(
+const mapboxDark = L.tileLayer(
   "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
   {
     attribution:
@@ -20,7 +20,26 @@ L.tileLayer(
     accessToken:
       "pk.eyJ1IjoibWF0aGlhc2g5OCIsImEiOiJja3c1ZGx6bmcwZmQyMm5sajJrZGQwdDF5In0.Vw5JcsEGSmSzYTVGzhHPNQ",
   }
-).addTo(map);
+);
+
+const cartoLight = L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}.png",
+  {
+    attribution:
+      'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.carto.com/">carto.com</a>',
+  }
+);
+
+const openStreetMapMapnik = L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }
+);
+
+mapboxDark.addTo(map);
 
 init();
 
@@ -34,7 +53,32 @@ async function init() {
     handleProgressSelectorChange(e.target.value, kommuneLayer)
   );
 
+  document.getElementById("map-selector").addEventListener("change", (e) => {
+    setTileLayer(e.target.value);
+  });
+
   handleProgressSelectorChange(progressSelectorRef.value, kommuneLayer);
+}
+
+/**
+ *
+ * @param {"mapbox-dark" | "carto-light" | "osm-mapnik"} tileLayer
+ */
+function setTileLayer(tileLayer) {
+  switch (tileLayer) {
+    case "mapbox-dark":
+      mapboxDark.addTo(map);
+      break;
+    case "carto-light":
+      cartoLight.addTo(map);
+      break;
+    case "osm-mapnik":
+      openStreetMapMapnik.addTo(map);
+      break;
+    default:
+      console.error(`${tileLayer} is not supported`);
+      break;
+  }
 }
 
 /**
@@ -145,12 +189,12 @@ function renderKommuneProgress(
   kommuneLayer.eachLayer((layer) => {
     const kommuneId = layer.feature.properties.kommunenummer;
     const kommune = kommuner[kommuneId] ?? kommuner[Number(kommuneId)];
+
     if (kommune) {
       const progress = kommune.progress;
       layer.feature.properties.progress = progress;
       layer.setStyle({
         fillColor: colorFunction(progress),
-        color: colorFunction(progress),
         fillOpacity: 0.1,
       });
       layer.bindPopup(`
@@ -162,9 +206,7 @@ function renderKommuneProgress(
       </div>
       `);
     } else {
-      console.error(
-        `Could not find kommune with id: ${kommuneId}, length of id: ${kommuneId.length}`
-      );
+      console.error(`Could not find kommune with id: ${kommuneId}`);
     }
   });
 }
