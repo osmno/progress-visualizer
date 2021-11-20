@@ -87,9 +87,7 @@ function setTileLayer(tileLayer) {
  */
 async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
   try {
-    const kommuner = await getKommuner();
-    /** @type {L.geoJSON} */
-    const kommuneLayer = renderKommuner(kommuner);
+    kommuneLayer.resetStyle();
     document.getElementById("error").innerHTML = "Laster...";
     switch (progressToVisualize) {
       case "building":
@@ -162,7 +160,7 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
 
   for (const kommune of progress) {
     const numberMatches = kommune[progressColumn]?.match(/\d+/);
-    let progressAsNumber = 0;
+    let progressAsNumber = null;
     if (numberMatches && numberMatches.length > 0) {
       progressAsNumber = Number(numberMatches[0]);
     }
@@ -185,7 +183,6 @@ function renderKommuneProgress(
   kommuner,
   colorFunction = getProgressColor
 ) {
-  console.debug(kommuneLayer, kommuner);
   kommuneLayer.eachLayer((layer) => {
     const kommuneId = layer.feature.properties.kommunenummer;
     const kommune = kommuner[kommuneId] ?? kommuner[Number(kommuneId)];
@@ -195,7 +192,7 @@ function renderKommuneProgress(
       layer.feature.properties.progress = progress;
       layer.setStyle({
         fillColor: colorFunction(progress),
-        fillOpacity: 0.1,
+        fillOpacity: 0.2,
       });
       layer.bindPopup(`
       <div class="popup">
@@ -217,7 +214,8 @@ function renderKommuneProgress(
  * @returns {string} Color from red to green as hsl
  */
 function getProgressColor(value) {
-  if (value <= 19) return "#ED1B2A";
+  if (value === null || value === 0) return "#fff";
+  else if (value <= 19) return "#ED1B2A";
   else if (value <= 39) return "#ED1B2A";
   else if (value <= 59) return "#F8B02C";
   else if (value <= 79) return "#FFD51F";
@@ -280,12 +278,21 @@ async function getN50Progress() {
     "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Topography_import_for_Norway/assignment"
   );
 
+  const parsedKommuner = [];
   data.forEach((kommune) => {
-    kommune.Id = kommune["Kommune-nummer"];
-    kommune.Municipality = kommune["Kommunenavn"];
+    /**@type {string} */
+    const kommuneId = kommune["Kommune-nummer"];
+    parsedKommuner.push({
+      ...kommune,
+      Id: kommuneId.includes("-")
+        ? kommune["Kommune-nummer"].split("-")[0]
+        : kommune["Kommune-nummer"],
+      Municipality: kommune["Kommunenavn"],
+    });
   });
+  console.debug(console.table(parsedKommuner));
 
-  return data;
+  return parsedKommuner;
 }
 
 /**
