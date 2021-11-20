@@ -278,21 +278,45 @@ async function getN50Progress() {
     "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Topography_import_for_Norway/assignment"
   );
 
-  const parsedKommuner = [];
+  const parsedKommuner = {};
   data.forEach((kommune) => {
     /**@type {string} */
-    const kommuneId = kommune["Kommune-nummer"];
-    parsedKommuner.push({
-      ...kommune,
-      Id: kommuneId.includes("-")
-        ? kommune["Kommune-nummer"].split("-")[0]
-        : kommune["Kommune-nummer"],
-      Municipality: kommune["Kommunenavn"],
-    });
-  });
-  console.debug(console.table(parsedKommuner));
+    const kommuneId = kommune["Kommune-nummer"].includes("-")
+      ? kommune["Kommune-nummer"].split("-")[0]
+      : kommune["Kommune-nummer"];
 
-  return parsedKommuner;
+    if (parsedKommuner[kommuneId]) {
+      parsedKommuner[kommuneId] = {
+        ...parsedKommuner[kommuneId],
+        Progresjon_arealdekke:
+          kommune["Progresjon_arealdekke"] >
+          parsedKommuner[kommuneId]["Progresjon_arealdekke"]
+            ? kommune["Progresjon_arealdekke"]
+            : parsedKommuner[kommuneId]["Progresjon_arealdekke"],
+        Progresjon_vann:
+          kommune["Progresjon_vann"] >
+          parsedKommuner[kommuneId]["Progresjon_vann"]
+            ? kommune["Progresjon_vann"]
+            : parsedKommuner[kommuneId]["Progresjon_vann"],
+        "Progresjon_kystlinje(ikke_alltid_relevant)":
+          kommune["Progresjon_kystlinje(ikke_alltid_relevant)"] >
+          parsedKommuner[kommuneId][
+            "Progresjon_kystlinje(ikke_alltid_relevant)"
+          ]
+            ? kommune["Progresjon_kystlinje(ikke_alltid_relevant)"]
+            : parsedKommuner[kommuneId][
+                "Progresjon_kystlinje(ikke_alltid_relevant)"
+              ],
+      };
+    } else {
+      parsedKommuner[kommuneId] = {
+        ...kommune,
+        Id: kommuneId,
+        Municipality: kommune["Kommunenavn"],
+      };
+    }
+  });
+  return Object.values(parsedKommuner);
 }
 
 /**
