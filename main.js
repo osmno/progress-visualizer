@@ -92,25 +92,15 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
     switch (progressToVisualize) {
       case "building":
         const buildingImportProgress = await getBuildingImportProgress();
-        renderKommuneProgress(
-          kommuneLayer,
-          getKommuneProgress(buildingImportProgress, "Polygon_progress")
-        );
+        renderKommuneProgress(kommuneLayer, buildingImportProgress);
         break;
       case "nvdb":
         const progress = await getNVDBManglerProgress();
-        renderKommuneProgress(
-          kommuneLayer,
-          getKommuneProgress(progress, "Percent_missing", true),
-          getNVDBProgressColor
-        );
+        renderKommuneProgress(kommuneLayer, progress, getNVDBProgressColor);
         break;
       case "n50":
         const n50Progress = await getN50Progress();
-        renderKommuneProgress(
-          kommuneLayer,
-          getKommuneProgress(n50Progress, "Progresjon_arealdekke")
-        );
+        renderKommuneProgress(kommuneLayer, n50Progress);
         break;
       default:
         console.error(`${progressToVisualize} is not supported`);
@@ -186,7 +176,6 @@ function renderKommuneProgress(
   kommuneLayer.eachLayer((layer) => {
     const kommuneId = layer.feature.properties.kommunenummer;
     const kommune = kommuner[kommuneId] ?? kommuner[Number(kommuneId)];
-
     if (kommune) {
       const progress = kommune.progress;
       layer.feature.properties.progress = progress;
@@ -203,7 +192,7 @@ function renderKommuneProgress(
       </div>
       `);
     } else {
-      console.error(`Could not find kommune with id: ${kommuneId}`);
+      console.warn(`Could not find kommune with id: ${kommuneId}`);
     }
   });
 }
@@ -253,21 +242,23 @@ async function getKommuner() {
 }
 
 /**
- * @return {Promise<KommuneBuildingProgress[]>}
+ * @return {Promise<{[id: string]: KommuneProgress}>}
  */
-function getBuildingImportProgress() {
-  return convertWikiToJson(
+async function getBuildingImportProgress() {
+  const data = await convertWikiToJson(
     "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Norway_Building_Import/Progress"
   );
+  return getKommuneProgress(data, "Polygon_progress");
 }
 
 /**
- * @return {Promise<Object[]>}
+ * @return {Promise<{[id: string]: KommuneProgress}>}
  */
-function getNVDBManglerProgress() {
-  return convertWikiToJson(
+async function getNVDBManglerProgress() {
+  const data = await convertWikiToJson(
     "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Road_import_(Norway)/Update"
   );
+  return getKommuneProgress(data, "Percent_missing", true);
 }
 
 /**
@@ -300,43 +291,68 @@ async function getN50Progress() {
 
       parsedKommuner[kommuneId] = {
         ...parsedKommuner[kommuneId],
-        Progresjon_arealdekke: getAvgAsString(
-          newArealdekke,
-          existingArealdekke
-        ),
-        Progresjon_vann: getAvgAsString(newVann, existingVann),
-        "Progresjon_kystlinje(ikke_alltid_relevant)": getAvgAsString(
+        Progresjon_arealdekke: getAvg([newArealdekke, existingArealdekke]),
+        Progresjon_vann: getAvg([newVann, existingVann]),
+        "Progresjon_kystlinje(ikke_alltid_relevant)": getAvg([
           newKystlinje,
-          exisitingKystlinje
-        ),
+          exisitingKystlinje,
+        ]),
       };
+      parsedKommuner[kommuneId].progress = parsedKommuner[kommuneId][
+        "Kommentar"
+      ].includes("not be imported")
+        ? 100
+        : getAvg([
+            parsedKommuner[kommuneId].progress,
+            getAvg([
+              kommune["Progresjon_kystlinje(ikke_alltid_relevant)"],
+              kommune["Progresjon_arealdekke"],
+              kommune["Progresjon_vann"],
+            ]),
+          ]);
     } else {
       parsedKommuner[kommuneId] = {
         ...kommune,
         Id: kommuneId,
         Municipality: kommune["Kommunenavn"],
+        progress: kommune["Kommentar"].includes("not be imported")
+          ? 100
+          : Number(
+              getAvg([
+                kommune["Progresjon_kystlinje(ikke_alltid_relevant)"],
+                kommune["Progresjon_arealdekke"],
+                kommune["Progresjon_vann"],
+              ])
+            ),
       };
     }
   });
-  return Object.values(parsedKommuner);
+  return parsedKommuner;
 }
 
 /**
- * @param {string} a
- * @param {string} b
- * @returns {string} average as string
+ * @param {(string | number)[]} nums
+ * @returns {number} average
  */
-function getAvgAsString(a, b) {
-  const aNumberMatches = a.match(/\d+/g);
-  const bNumberMatches = b.match(/\d+/g);
+function getAvg(nums) {
+  let numberOfNotApplicable = 0;
+  let total = 0;
 
-  const aAsNumber =
-    aNumberMatches && aNumberMatches.length > 0 ? Number(aNumberMatches[0]) : 0;
-  const bAsNumber =
-    bNumberMatches && bNumberMatches.length > 0 ? Number(bNumberMatches[0]) : 0;
+  nums.forEach((num) => {
+    if (!isNaN(num)) {
+      total += num;
+    } else {
+      const numNumberMatches = num.match(/\d+/g);
+      if (num == "N/A") numberOfNotApplicable++;
+      const numAsNumber =
+        numNumberMatches && numNumberMatches.length > 0
+          ? Number(numNumberMatches[0])
+          : 0;
+      total += numAsNumber;
+    }
+  });
 
-  const avg = Math.round((aAsNumber + bAsNumber) / 2).toString();
-  return avg;
+  return Math.round(total / Math.max(1, nums.length - numberOfNotApplicable));
 }
 
 /**
@@ -345,9 +361,6 @@ function getAvgAsString(a, b) {
  * @returns
  */
 async function convertWikiToJson(url) {
-  // const resp = await fetch(
-  //   `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-  // );
   const resp = await fetch(
     `https://production.osmno-cors-proxy.mathiash98.workers.dev/${url.replace(
       "https://wiki.openstreetmap.org/",
@@ -364,7 +377,6 @@ async function convertWikiToJson(url) {
     );
     const progressTable = progressHtml.querySelector("table");
     const tableAsJson = parseHTMLTableElem(progressTable);
-    console.dir(tableAsJson);
     return tableAsJson;
   } else {
     throw new Error(resp.statusText);

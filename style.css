@@ -9,15 +9,31 @@ body {
   height: 100vh;
 }
 
-#selector {
+#selector,
+#github-link {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  max-width: 80%;
   z-index: 1000;
   background-color: #fff;
   padding: 5px;
   border-radius: 10px;
+}
+#github-link {
+  bottom: 4px;
+  left: 4px;
+}
+#github-link a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-decoration: none;
+  color: black;
+}
+
+#selector {
+  top: 10px;
+  left: 10px;
+  max-width: 80%;
 }
 
 h1 {
