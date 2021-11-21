@@ -286,27 +286,29 @@ async function getN50Progress() {
       : kommune["Kommune-nummer"];
 
     if (parsedKommuner[kommuneId]) {
+      const newArealdekke = kommune["Progresjon_arealdekke"];
+      const existingArealdekke =
+        parsedKommuner[kommuneId]["Progresjon_arealdekke"];
+
+      const newVann = kommune["Progresjon_vann"];
+      const existingVann = parsedKommuner[kommuneId]["Progresjon_vann"];
+
+      const newKystlinje =
+        kommune["Progresjon_kystlinje(ikke_alltid_relevant)"];
+      const exisitingKystlinje =
+        parsedKommuner[kommuneId]["Progresjon_kystlinje(ikke_alltid_relevant)"];
+
       parsedKommuner[kommuneId] = {
         ...parsedKommuner[kommuneId],
-        Progresjon_arealdekke:
-          kommune["Progresjon_arealdekke"] >
-          parsedKommuner[kommuneId]["Progresjon_arealdekke"]
-            ? kommune["Progresjon_arealdekke"]
-            : parsedKommuner[kommuneId]["Progresjon_arealdekke"],
-        Progresjon_vann:
-          kommune["Progresjon_vann"] >
-          parsedKommuner[kommuneId]["Progresjon_vann"]
-            ? kommune["Progresjon_vann"]
-            : parsedKommuner[kommuneId]["Progresjon_vann"],
-        "Progresjon_kystlinje(ikke_alltid_relevant)":
-          kommune["Progresjon_kystlinje(ikke_alltid_relevant)"] >
-          parsedKommuner[kommuneId][
-            "Progresjon_kystlinje(ikke_alltid_relevant)"
-          ]
-            ? kommune["Progresjon_kystlinje(ikke_alltid_relevant)"]
-            : parsedKommuner[kommuneId][
-                "Progresjon_kystlinje(ikke_alltid_relevant)"
-              ],
+        Progresjon_arealdekke: getAvgAsString(
+          newArealdekke,
+          existingArealdekke
+        ),
+        Progresjon_vann: getAvgAsString(newVann, existingVann),
+        "Progresjon_kystlinje(ikke_alltid_relevant)": getAvgAsString(
+          newKystlinje,
+          exisitingKystlinje
+        ),
       };
     } else {
       parsedKommuner[kommuneId] = {
@@ -317,6 +319,24 @@ async function getN50Progress() {
     }
   });
   return Object.values(parsedKommuner);
+}
+
+/**
+ * @param {string} a
+ * @param {string} b
+ * @returns {string} average as string
+ */
+function getAvgAsString(a, b) {
+  const aNumberMatches = a.match(/\d+/g);
+  const bNumberMatches = b.match(/\d+/g);
+
+  const aAsNumber =
+    aNumberMatches && aNumberMatches.length > 0 ? Number(aNumberMatches[0]) : 0;
+  const bAsNumber =
+    bNumberMatches && bNumberMatches.length > 0 ? Number(bNumberMatches[0]) : 0;
+
+  const avg = Math.round((aAsNumber + bAsNumber) / 2).toString();
+  return avg;
 }
 
 /**
