@@ -226,9 +226,9 @@ function ssrProgressColor(value) {
   // red
   else if (value <= 10) return "#ED1B2A";
   // dark orange
-  else if (value < 30) return "#F8B02C";
+  else if (value < 20) return "#F8B02C";
   // light orange
-  else if (value < 45) return "#FFD51F";
+  else if (value < 40) return "#FFD51F";
   // yellow
   else if (value < 60) return "#BBCD5A";
   // green
