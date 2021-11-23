@@ -83,7 +83,7 @@ function setTileLayer(tileLayer) {
 
 /**
  *
- * @param {{"building" | "nvdb" | "n50"}} progressToVisualize
+ * @param {{"building" | "nvdb" | "n50" | "ssr"}} progressToVisualize
  */
 async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
   try {
@@ -102,6 +102,10 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
         const n50Progress = await getN50Progress();
         renderKommuneProgress(kommuneLayer, n50Progress);
         break;
+      case "ssr":
+        const ssrProgress = await getSSRProgress();
+        renderKommuneProgress(kommuneLayer, ssrProgress, ssrProgressColor);
+        break;
       default:
         console.error(`${progressToVisualize} is not supported`);
         break;
@@ -115,7 +119,7 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
 
 /**
  *
- * @param {{Id: string,}}} progress
+ * @param {{[Id: string]: Object}} progress
  */
 function renderProgress(progress) {
   const progressEl = document.querySelector("#progress");
@@ -213,6 +217,15 @@ function getProgressColor(value) {
 }
 
 /**
+ * Get progress color based on https://wiki.openstreetmap.org/wiki/Template:Progress
+ * @param {number} value from 0 to 1
+ * @returns {string} Color from red to green as hsl
+ */
+function ssrProgressColor(value) {
+  return getProgressColor(value > 0 ? value + 25 : value);
+}
+
+/**
  *
  * @param {number} value from 0 to 1
  * @returns {string} Color from red to green as hsl
@@ -262,7 +275,23 @@ async function getNVDBManglerProgress() {
 }
 
 /**
- * @return {Promise<Object[]>}
+ * @return {Promise<Object>}
+ */
+async function getSSRProgress() {
+  const data = await convertWikiToJson(
+    "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Central_place_name_register_import_(Norway)/Progress"
+  );
+
+  data.forEach((kommune) => {
+    kommune.Municipality = kommune["Kommune"];
+    kommune.Id = kommune["Knr"];
+  });
+
+  return getKommuneProgress(data, "Status");
+}
+
+/**
+ * @return {Promise<Object>}
  */
 async function getN50Progress() {
   const data = await convertWikiToJson(
