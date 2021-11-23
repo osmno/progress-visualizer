@@ -222,7 +222,17 @@ function getProgressColor(value) {
  * @returns {string} Color from red to green as hsl
  */
 function ssrProgressColor(value) {
-  return getProgressColor(value > 0 ? value + 25 : value);
+  if (value === null || value === 0) return "#fff";
+  // red
+  else if (value <= 10) return "#ED1B2A";
+  // dark orange
+  else if (value < 30) return "#F8B02C";
+  // light orange
+  else if (value < 45) return "#FFD51F";
+  // yellow
+  else if (value < 60) return "#BBCD5A";
+  // green
+  else return "#008B5A"; // green
 }
 
 /**
