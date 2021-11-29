@@ -106,6 +106,10 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
         const ssrProgress = await getSSRProgress();
         renderKommuneProgress(kommuneLayer, ssrProgress, ssrProgressColor);
         break;
+      case "barnehagefakta":
+        const barnehagefaktaProgress = await getBarnehagefaktaProgress();
+        renderKommuneProgress(kommuneLayer, barnehagefaktaProgress);
+        break;
       default:
         console.error(`${progressToVisualize} is not supported`);
         break;
@@ -269,7 +273,8 @@ async function getKommuner() {
  */
 async function getBuildingImportProgress() {
   const data = await convertWikiToJson(
-    "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Norway_Building_Import/Progress"
+    "wiki.openstreetmap.org",
+    "wiki/Import/Catalogue/Norway_Building_Import/Progress"
   );
   return getKommuneProgress(data, "Polygon_progress");
 }
@@ -279,7 +284,8 @@ async function getBuildingImportProgress() {
  */
 async function getNVDBManglerProgress() {
   const data = await convertWikiToJson(
-    "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Road_import_(Norway)/Update"
+    "wiki.openstreetmap.org",
+    "wiki/Import/Catalogue/Road_import_(Norway)/Update"
   );
   return getKommuneProgress(data, "Percent_missing", true);
 }
@@ -289,7 +295,8 @@ async function getNVDBManglerProgress() {
  */
 async function getSSRProgress() {
   const data = await convertWikiToJson(
-    "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Central_place_name_register_import_(Norway)/Progress"
+    "wiki.openstreetmap.org",
+    "wiki/Import/Catalogue/Central_place_name_register_import_(Norway)/Progress"
   );
 
   data.forEach((kommune) => {
@@ -303,9 +310,29 @@ async function getSSRProgress() {
 /**
  * @return {Promise<Object>}
  */
+async function getBarnehagefaktaProgress() {
+  const data = await convertWikiToJson(
+    "obtitus.github.io",
+    "barnehagefakta_osm_data/index.html"
+  );
+
+  console.debug(data);
+
+  data.forEach((kommune) => {
+    kommune.Municipality = kommune["Kommune_navn"];
+    kommune.Id = kommune["Kommune_nr"];
+  });
+
+  return getKommuneProgress(data, "Prosent_gjenkjent");
+}
+
+/**
+ * @return {Promise<Object>}
+ */
 async function getN50Progress() {
   const data = await convertWikiToJson(
-    "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Topography_import_for_Norway/assignment"
+    "wiki.openstreetmap.org",
+    "wiki/Import/Catalogue/Topography_import_for_Norway/assignment"
   );
 
   const parsedKommuner = {};
@@ -397,14 +424,12 @@ function getAvg(nums) {
 /**
  *
  * @param {string} url
+ * @param {string} path
  * @returns
  */
-async function convertWikiToJson(url) {
+async function convertWikiToJson(url, path) {
   const resp = await fetch(
-    `https://production.osmno-cors-proxy.mathiash98.workers.dev/${url.replace(
-      "https://wiki.openstreetmap.org/",
-      ""
-    )}`
+    `https://production.osmno-cors-proxy.mathiash98.workers.dev/${path}?url=${url}`
   );
 
   if (resp.ok) {
