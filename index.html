@@ -20,31 +20,42 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <div id="selector">
+      <h1>
+        OSM Norge progress<button
+          id="selector-dropdown-toggle"
+          aria-label="toggle project selector window"
+          onclick="document.getElementById('selector-dropdown').classList.toggle('invisible'); document.getElementById('selector-dropdown-toggle').classList.toggle('flip')"
+        >
+          ▲
+        </button>
+      </h1>
+      <div id="selector-dropdown">
+        <br />
+        <label for="progress-selector">Project:</label>
+        <select name="progress-selector" id="progress-selector">
+          <option value="building">Building import</option>
+          <option value="nvdb">NVDB missing</option>
+          <option value="n50">N50</option>
+          <option value="ssr">SSR</option>
+          <option value="barnehagefakta">Barnehagefakta</option>
+        </select>
+        <br />
+        <br />
+        <label for="map-selector">Style:</label>
+        <select name="map-selector" id="map-selector">
+          <option value="mapbox-dark" selected>Mapbox dark</option>
+          <option value="carto-light">Carto light</option>
+          <option value="osm-mapnik">OpenStreetMap Carto</option>
+        </select>
+      </div>
+      <p id="error"></p>
+    </div>
     <div id="map"></div>
     <div id="github-link">
       <a href="https://github.com/osmno/progress-visualizer" target="_blank"
         >GitHub <img src="./githubMark.svg" alt="GitHub logo" width="24"
       /></a>
-    </div>
-    <div id="selector">
-      <h1>OSM Norge progress</h1>
-      <label for="progress-selector">Chose what progress to visualize</label>
-      <select name="progress-selector" id="progress-selector">
-        <option value="building">Building import</option>
-        <option value="nvdb">NVDB missing</option>
-        <option value="n50">N50</option>
-        <option value="ssr">SSR</option>
-        <option value="barnehagefakta">Barnehagefakta</option>
-      </select>
-      <br />
-      <br />
-      <label for="map-selector">Chose map</label>
-      <select name="map-selector" id="map-selector">
-        <option value="mapbox-dark" selected>Mapbox dark</option>
-        <option value="carto-light">Carto light</option>
-        <option value="osm-mapnik">OpenStreetMap Carto</option>
-      </select>
-      <p id="error"></p>
     </div>
 
     <script src="./main.js"></script>
