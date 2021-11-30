@@ -44,11 +44,24 @@ mapboxDark.addTo(map);
 init();
 
 async function init() {
+  const selectedProject = new URLSearchParams(window.location.search).get(
+    "project"
+  );
+
   const kommuner = await getKommuner();
   /** @type {L.geoJSON} */
   const kommuneLayer = renderKommuner(kommuner);
 
   const progressSelectorRef = document.getElementById("progress-selector");
+
+  if (
+    Array.from(progressSelectorRef.options).some(
+      (opt) => opt.value == selectedProject
+    )
+  ) {
+    progressSelectorRef.value = selectedProject;
+  }
+
   progressSelectorRef.addEventListener("change", (e) =>
     handleProgressSelectorChange(e.target.value, kommuneLayer)
   );
@@ -114,6 +127,7 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
         console.error(`${progressToVisualize} is not supported`);
         break;
     }
+    window.history.replaceState(null, null, `?project=${progressToVisualize}`);
     document.getElementById("error").innerHTML = "";
   } catch (error) {
     document.getElementById("error").innerHTML = error.message;
