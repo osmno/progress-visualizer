@@ -290,7 +290,7 @@ async function getBuildingImportProgress() {
     "wiki.openstreetmap.org",
     "wiki/Import/Catalogue/Norway_Building_Import/Progress"
   );
-  return getKommuneProgress(data, "Polygon_progress");
+  return getKommuneProgress(data, "Building_progress");
 }
 
 /**
