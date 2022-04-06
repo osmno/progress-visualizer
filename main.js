@@ -286,9 +286,12 @@ async function getKommuner() {
  * @return {Promise<{[id: string]: KommuneProgress}>}
  */
 async function getBuildingImportProgress() {
+  const hostname = "wiki.openstreetmap.org";
+  const path = "wiki/Import/Catalogue/Norway_Building_Import/Progress";
+  setProgressSourceUrl(`https://${hostname}/${path}`);
   const data = await convertWikiToJson(
-    "wiki.openstreetmap.org",
-    "wiki/Import/Catalogue/Norway_Building_Import/Progress"
+    hostname,
+    path
   );
   return getKommuneProgress(data, "Building_progress");
 }
@@ -297,9 +300,12 @@ async function getBuildingImportProgress() {
  * @return {Promise<{[id: string]: KommuneProgress}>}
  */
 async function getNVDBManglerProgress() {
+  const hostname = "wiki.openstreetmap.org";
+  const path = "wiki/Import/Catalogue/Road_import_(Norway)/Update";
+  setProgressSourceUrl(`https://${hostname}/${path}`);
   const data = await convertWikiToJson(
-    "wiki.openstreetmap.org",
-    "wiki/Import/Catalogue/Road_import_(Norway)/Update"
+    hostname,
+    path
   );
   return getKommuneProgress(data, "Percent_missing", true);
 }
@@ -308,9 +314,12 @@ async function getNVDBManglerProgress() {
  * @return {Promise<Object>}
  */
 async function getSSRProgress() {
+  const hostname = "wiki.openstreetmap.org";
+  const path = "wiki/Import/Catalogue/Central_place_name_register_import_(Norway)/Progress";
+  setProgressSourceUrl(`https://${hostname}/${path}`);
   const data = await convertWikiToJson(
-    "wiki.openstreetmap.org",
-    "wiki/Import/Catalogue/Central_place_name_register_import_(Norway)/Progress"
+    hostname,
+    path
   );
 
   data.forEach((kommune) => {
@@ -325,9 +334,12 @@ async function getSSRProgress() {
  * @return {Promise<Object>}
  */
 async function getBarnehagefaktaProgress() {
+  const hostname = "obtitus.github.io";
+  const path = "barnehagefakta_osm_data/index.html";
+  setProgressSourceUrl(`https://${hostname}/${path}`);
   const data = await convertWikiToJson(
-    "obtitus.github.io",
-    "barnehagefakta_osm_data/index.html"
+    hostname,
+    path
   );
 
   console.debug(data);
@@ -344,9 +356,12 @@ async function getBarnehagefaktaProgress() {
  * @return {Promise<Object>}
  */
 async function getN50Progress() {
+  const hostname = "wiki.openstreetmap.org";
+  const path = "wiki/Import/Catalogue/Topography_import_for_Norway/assignment";
+  setProgressSourceUrl(`https://${hostname}/${path}`);
   const data = await convertWikiToJson(
-    "wiki.openstreetmap.org",
-    "wiki/Import/Catalogue/Topography_import_for_Norway/assignment"
+    hostname,
+    path
   );
 
   const parsedKommuner = {};
@@ -408,6 +423,11 @@ async function getN50Progress() {
     }
   });
   return parsedKommuner;
+}
+
+
+function setProgressSourceUrl(url) {
+  document.getElementById("progress-source-url").href = url;
 }
 
 /**
