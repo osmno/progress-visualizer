@@ -123,6 +123,10 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
         const barnehagefaktaProgress = await getBarnehagefaktaProgress();
         renderKommuneProgress(kommuneLayer, barnehagefaktaProgress);
         break;
+      case "highwayTagUpdate":
+        const highwayTagUpdateProgress = await getHighwayTagUpdateProgress();
+        renderKommuneProgress(kommuneLayer, highwayTagUpdateProgress);
+        break;
       default:
         console.error(`${progressToVisualize} is not supported`);
         break;
@@ -171,7 +175,8 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
   const kommuneIdToProgress = {};
 
   for (const kommune of progress) {
-    const numberMatches = kommune[progressColumn]?.match(/\d+/);
+    const valueAsPotentiallyString = kommune[progressColumn];
+    const numberMatches = isNaN(valueAsPotentiallyString) ? valueAsPotentiallyString?.match(/\d+/) : [valueAsPotentiallyString];
     let progressAsNumber = null;
     if (numberMatches && numberMatches.length > 0) {
       progressAsNumber = Number(numberMatches[0]);
@@ -308,6 +313,26 @@ async function getNVDBManglerProgress() {
     path
   );
   return getKommuneProgress(data, "Percent_missing", true);
+}
+
+/**
+ * @return {Promise<{[id: string]: KommuneProgress}>}
+ */
+async function getHighwayTagUpdateProgress() {
+  const hostname = "wiki.openstreetmap.org";
+  const path = "wiki/Import/Catalogue/Road_import_(Norway)/Tag_Update";
+  setProgressSourceUrl(`https://${hostname}/${path}`);
+  const data = await convertWikiToJson(
+    hostname,
+    path
+  );
+
+  data.forEach((kommune) => {
+    kommune.Id = kommune["Mnr"];
+    kommune.avg_missing_percentage = getAvg([kommune["Local_highways_Percent_highways"], kommune["State/county_highways_Percent_highways"]]);
+  });
+console.dir(data);
+  return getKommuneProgress(data, "avg_missing_percentage", true);
 }
 
 /**
