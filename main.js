@@ -55,7 +55,6 @@ init();
 async function init() {
   // Populate project selector with random project selected
   const defaultSelected = projectOptions[Math.floor(Math.random()*projectOptions.length)];
-  console.debug(defaultSelected);
   /** @type {HTMLSelectElement} */
   const progressSelectorRef = document.getElementById("progress-selector");
   projectOptions.forEach(option => {
