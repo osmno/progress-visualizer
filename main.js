@@ -1,3 +1,12 @@
+const projectOptions = [
+{id: "ssr", label: "SSR"},
+{id: "nvdb", label: "NVDB missing"},
+{id: "highwayTagUpdate", label: "Highway tags"},
+{id: "n50", label: "N50"},
+{id: "barnehagefakta", label: "Barnehagefakta"},
+{id: "building", label: "Building import"},
+];
+
 const map = L.map("map", {
   zoomControl: false,
 }).setView([64.69135656676626, 10.795899331569672], 6);
@@ -44,6 +53,16 @@ mapboxDark.addTo(map);
 init();
 
 async function init() {
+  // Populate project selector with random project selected
+  const defaultSelected = projectOptions[Math.floor(Math.random()*projectOptions.length)];
+  console.debug(defaultSelected);
+  /** @type {HTMLSelectElement} */
+  const progressSelectorRef = document.getElementById("progress-selector");
+  projectOptions.forEach(option => {
+    progressSelectorRef.options.add(new Option(option.label, option.id, defaultSelected.id == option.id, defaultSelected.id == option.id));
+  });
+
+
   const selectedProject = new URLSearchParams(window.location.search).get(
     "project"
   );
@@ -52,7 +71,6 @@ async function init() {
   /** @type {L.geoJSON} */
   const kommuneLayer = renderKommuner(kommuner);
 
-  const progressSelectorRef = document.getElementById("progress-selector");
 
   if (
     Array.from(progressSelectorRef.options).some(
@@ -96,7 +114,7 @@ function setTileLayer(tileLayer) {
 
 /**
  *
- * @param {{"building" | "nvdb" | "n50" | "ssr"}} progressToVisualize
+ * @param {{"building" | "nvdb" | "n50" | "ssr" | "barnehagefakta" | "highwayTagUpdate"}} progressToVisualize
  */
 async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
   try {
