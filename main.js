@@ -122,6 +122,7 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
     switch (progressToVisualize) {
       case "building":
         const buildingImportProgress = await getBuildingImportProgress();
+        console.debug(buildingImportProgress);
         renderKommuneProgress(kommuneLayer, buildingImportProgress);
         break;
       case "nvdb":
@@ -315,7 +316,7 @@ async function getBuildingImportProgress() {
     hostname,
     path
   );
-  return getKommuneProgress(data, "Building_progress");
+  return getKommuneProgress(data, "Polygon_progress");
 }
 
 /**
