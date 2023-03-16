@@ -1,10 +1,10 @@
 const projectOptions = [
-{id: "ssr", label: "SSR"},
-{id: "nvdb", label: "NVDB missing"},
-{id: "highwayTagUpdate", label: "Highway tags"},
-{id: "n50", label: "N50"},
-{id: "barnehagefakta", label: "Barnehagefakta"},
-{id: "building", label: "Building import"},
+  { id: "ssr", label: "SSR" },
+  { id: "nvdb", label: "NVDB missing" },
+  { id: "highwayTagUpdate", label: "Highway tags" },
+  { id: "n50", label: "N50" },
+  { id: "barnehagefakta", label: "Barnehagefakta" },
+  { id: "building", label: "Building import" },
 ];
 
 const map = L.map("map", {
@@ -54,13 +54,20 @@ init();
 
 async function init() {
   // Populate project selector with random project selected
-  const defaultSelected = projectOptions[Math.floor(Math.random()*projectOptions.length)];
+  const defaultSelected =
+    projectOptions[Math.floor(Math.random() * projectOptions.length)];
   /** @type {HTMLSelectElement} */
   const progressSelectorRef = document.getElementById("progress-selector");
-  projectOptions.forEach(option => {
-    progressSelectorRef.options.add(new Option(option.label, option.id, defaultSelected.id == option.id, defaultSelected.id == option.id));
+  projectOptions.forEach((option) => {
+    progressSelectorRef.options.add(
+      new Option(
+        option.label,
+        option.id,
+        defaultSelected.id == option.id,
+        defaultSelected.id == option.id
+      )
+    );
   });
-
 
   const selectedProject = new URLSearchParams(window.location.search).get(
     "project"
@@ -69,7 +76,6 @@ async function init() {
   const kommuner = await getKommuner();
   /** @type {L.geoJSON} */
   const kommuneLayer = renderKommuner(kommuner);
-
 
   if (
     Array.from(progressSelectorRef.options).some(
@@ -98,12 +104,18 @@ function setTileLayer(tileLayer) {
   switch (tileLayer) {
     case "mapbox-dark":
       mapboxDark.addTo(map);
+      map.removeLayer(cartoLight);
+      map.removeLayer(openStreetMapMapnik);
       break;
     case "carto-light":
       cartoLight.addTo(map);
+      map.removeLayer(mapboxDark);
+      map.removeLayer(openStreetMapMapnik);
       break;
     case "osm-mapnik":
       openStreetMapMapnik.addTo(map);
+      map.removeLayer(mapboxDark);
+      map.removeLayer(cartoLight);
       break;
     default:
       console.error(`${tileLayer} is not supported`);
@@ -194,7 +206,9 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
 
   for (const kommune of progress) {
     const valueAsPotentiallyString = kommune[progressColumn];
-    const numberMatches = isNaN(valueAsPotentiallyString) ? valueAsPotentiallyString?.match(/\d+/) : [valueAsPotentiallyString];
+    const numberMatches = isNaN(valueAsPotentiallyString)
+      ? valueAsPotentiallyString?.match(/\d+/)
+      : [valueAsPotentiallyString];
     let progressAsNumber = null;
     if (numberMatches && numberMatches.length > 0) {
       progressAsNumber = Number(numberMatches[0]);
@@ -226,7 +240,7 @@ function renderKommuneProgress(
       layer.feature.properties.progress = progress;
       layer.setStyle({
         fillColor: colorFunction(progress),
-        fillOpacity: 0.2,
+        fillOpacity: getOpacityBasedOnProgress(progress),
       });
       layer.bindPopup(`
       <div class="popup">
@@ -255,6 +269,21 @@ function getProgressColor(value) {
   else if (value <= 79) return "#FFD51F";
   else if (value <= 99) return "#BBCD5A";
   else return "#008B5A";
+}
+
+/**
+ * Get progress color opacity
+ * @param {number} value from 0 to 1
+ * @returns {string} Color from red to green as hsl
+ */
+function getOpacityBasedOnProgress(value) {
+  if (value === null || value === 0) return "#fff";
+  else if (value <= 19) return 0.4;
+  else if (value <= 39) return 0.4;
+  else if (value <= 59) return 0.2;
+  else if (value <= 79) return 0.2;
+  else if (value <= 99) return 0.2;
+  else return 0.2;
 }
 
 /**
@@ -312,10 +341,7 @@ async function getBuildingImportProgress() {
   const hostname = "wiki.openstreetmap.org";
   const path = "wiki/Import/Catalogue/Norway_Building_Import/Progress";
   setProgressSourceUrl(`https://${hostname}/${path}`);
-  const data = await convertWikiToJson(
-    hostname,
-    path
-  );
+  const data = await convertWikiToJson(hostname, path);
   return getKommuneProgress(data, "Polygon_progress");
 }
 
@@ -326,10 +352,7 @@ async function getNVDBManglerProgress() {
   const hostname = "wiki.openstreetmap.org";
   const path = "wiki/Import/Catalogue/Road_import_(Norway)/Update";
   setProgressSourceUrl(`https://${hostname}/${path}`);
-  const data = await convertWikiToJson(
-    hostname,
-    path
-  );
+  const data = await convertWikiToJson(hostname, path);
   return getKommuneProgress(data, "Percent_missing", true);
 }
 
@@ -340,16 +363,16 @@ async function getHighwayTagUpdateProgress() {
   const hostname = "wiki.openstreetmap.org";
   const path = "wiki/Import/Catalogue/Road_import_(Norway)/Tag_Update";
   setProgressSourceUrl(`https://${hostname}/${path}`);
-  const data = await convertWikiToJson(
-    hostname,
-    path
-  );
+  const data = await convertWikiToJson(hostname, path);
 
   data.forEach((kommune) => {
     kommune.Id = kommune["Mnr"];
-    kommune.avg_missing_percentage = getAvg([kommune["Local_highways_Percent_highways"], kommune["State/county_highways_Percent_highways"]]);
+    kommune.avg_missing_percentage = getAvg([
+      kommune["Local_highways_Percent_highways"],
+      kommune["State/county_highways_Percent_highways"],
+    ]);
   });
-console.dir(data);
+  console.dir(data);
   return getKommuneProgress(data, "avg_missing_percentage", true);
 }
 
@@ -358,12 +381,10 @@ console.dir(data);
  */
 async function getSSRProgress() {
   const hostname = "wiki.openstreetmap.org";
-  const path = "wiki/Import/Catalogue/Central_place_name_register_import_(Norway)/Progress";
+  const path =
+    "wiki/Import/Catalogue/Central_place_name_register_import_(Norway)/Progress";
   setProgressSourceUrl(`https://${hostname}/${path}`);
-  const data = await convertWikiToJson(
-    hostname,
-    path
-  );
+  const data = await convertWikiToJson(hostname, path);
 
   data.forEach((kommune) => {
     kommune.Municipality = kommune["Kommune"];
@@ -380,10 +401,7 @@ async function getBarnehagefaktaProgress() {
   const hostname = "obtitus.github.io";
   const path = "barnehagefakta_osm_data/index.html";
   setProgressSourceUrl(`https://${hostname}/${path}`);
-  const data = await convertWikiToJson(
-    hostname,
-    path
-  );
+  const data = await convertWikiToJson(hostname, path);
 
   console.debug(data);
 
@@ -402,10 +420,7 @@ async function getN50Progress() {
   const hostname = "wiki.openstreetmap.org";
   const path = "wiki/Import/Catalogue/Topography_import_for_Norway/assignment";
   setProgressSourceUrl(`https://${hostname}/${path}`);
-  const data = await convertWikiToJson(
-    hostname,
-    path
-  );
+  const data = await convertWikiToJson(hostname, path);
 
   const parsedKommuner = {};
   data.forEach((kommune) => {
@@ -467,7 +482,6 @@ async function getN50Progress() {
   });
   return parsedKommuner;
 }
-
 
 function setProgressSourceUrl(url) {
   document.getElementById("progress-source-url").href = url;
