@@ -277,7 +277,7 @@ function getProgressColor(value) {
  * @returns {string} Color from red to green as hsl
  */
 function getOpacityBasedOnProgress(value) {
-  if (value === null || value === 0) return "#fff";
+  if (value === null || value === 0) return 0.2;
   else if (value <= 19) return 0.4;
   else if (value <= 39) return 0.4;
   else if (value <= 59) return 0.2;
