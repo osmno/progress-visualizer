@@ -155,7 +155,11 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
         break;
       case "highwayTagUpdate":
         const highwayTagUpdateProgress = await getHighwayTagUpdateProgress();
-        renderKommuneProgress(kommuneLayer, highwayTagUpdateProgress);
+        renderKommuneProgress(
+          kommuneLayer,
+          highwayTagUpdateProgress,
+          highwayProgressColor
+        );
         break;
       default:
         console.error(`${progressToVisualize} is not supported`);
@@ -240,7 +244,7 @@ function renderKommuneProgress(
       layer.feature.properties.progress = progress;
       layer.setStyle({
         fillColor: colorFunction(progress),
-        fillOpacity: getOpacityBasedOnProgress(progress),
+        fillOpacity: 0.2,
       });
       layer.bindPopup(`
       <div class="popup">
@@ -272,18 +276,17 @@ function getProgressColor(value) {
 }
 
 /**
- * Get progress color opacity
+ * Get progress color based on https://wiki.openstreetmap.org/wiki/Template:Progress
  * @param {number} value from 0 to 1
  * @returns {string} Color from red to green as hsl
  */
-function getOpacityBasedOnProgress(value) {
-  if (value === null || value === 0) return 0.2;
-  else if (value <= 19) return 0.4;
-  else if (value <= 39) return 0.4;
-  else if (value <= 59) return 0.2;
-  else if (value <= 79) return 0.2;
-  else if (value <= 99) return 0.2;
-  else return 0.2;
+function highwayProgressColor(value) {
+  if (value === null || value === 0) return "#fff";
+  else if (value <= 55) return "#ED1B2A";
+  else if (value <= 69) return "#F8B02C";
+  else if (value <= 79) return "#FFD51F";
+  else if (value <= 99) return "#BBCD5A";
+  else return "#008B5A";
 }
 
 /**
