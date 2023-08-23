@@ -143,7 +143,9 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
         break;
       case "n50":
         const n50Progress = await getN50Progress();
-        renderKommuneProgress(kommuneLayer, n50Progress);
+        renderKommuneProgress(kommuneLayer, n50Progress, (num) =>
+          getProgressColor(num, "#444")
+        );
         break;
       case "ssr":
         const ssrProgress = await getSSRProgress();
@@ -265,8 +267,9 @@ function renderKommuneProgress(
  * @param {number} value from 0 to 1
  * @returns {string} Color from red to green as hsl
  */
-function getProgressColor(value) {
-  if (value === null || value === 0) return "#fff";
+function getProgressColor(value, nullColor = "#fff") {
+  if (value == null) return nullColor;
+  else if (value === 0) return "#fff";
   else if (value <= 19) return "#ED1B2A";
   else if (value <= 39) return "#ED1B2A";
   else if (value <= 59) return "#F8B02C";
@@ -280,8 +283,9 @@ function getProgressColor(value) {
  * @param {number} value from 0 to 1
  * @returns {string} Color from red to green as hsl
  */
-function highwayProgressColor(value) {
-  if (value === null || value === 0) return "#fff";
+function highwayProgressColor(value, nullColor = "#fff") {
+  if (value == null) return nullColor;
+  else if (value === 0) return "#fff";
   else if (value <= 55) return "#ED1B2A";
   else if (value <= 69) return "#F8B02C";
   else if (value <= 79) return "#FFD51F";
@@ -294,8 +298,9 @@ function highwayProgressColor(value) {
  * @param {number} value from 0 to 1
  * @returns {string} Color from red to green as hsl
  */
-function ssrProgressColor(value) {
-  if (value === null || value === 0) return "#fff";
+function ssrProgressColor(value, nullColor = "#fff") {
+  if (value == null) return nullColor;
+  else if (value === 0) return "#fff";
   // red
   else if (value <= 10) return "#ED1B2A";
   // dark orange
@@ -457,7 +462,7 @@ async function getN50Progress() {
       parsedKommuner[kommuneId].progress = parsedKommuner[kommuneId][
         "Kommentar"
       ].includes("not be imported")
-        ? 100
+        ? null
         : getAvg([
             parsedKommuner[kommuneId].progress,
             getAvg([
@@ -472,7 +477,7 @@ async function getN50Progress() {
         Id: kommuneId,
         Municipality: kommune["Kommunenavn"],
         progress: kommune["Kommentar"].includes("not be imported")
-          ? 100
+          ? null
           : Number(
               getAvg([
                 kommune["Progresjon_kystlinje(ikke_alltid_relevant)"],
@@ -557,7 +562,7 @@ function parseHTMLTableElem(tableEl) {
     const cells = Array.from(row.querySelectorAll("td"));
     for (let i = 0; i < columns.length; i++) {
       const cell = cells[i];
-      if (cell && cell.textContent) {
+      if (cell?.textContent) {
         rowObject[columns[i]] = cell.textContent.replace(/\\n/g, "").trim();
       }
     }
@@ -574,12 +579,12 @@ function parseHTMLTableElem(tableEl) {
  * https://github.com/Leaflet/Leaflet/issues/3575
  */
 (function () {
-  var originalInitTile = L.GridLayer.prototype._initTile;
+  const originalInitTile = L.GridLayer.prototype._initTile;
   L.GridLayer.include({
     _initTile: function (tile) {
       originalInitTile.call(this, tile);
 
-      var tileSize = this.getTileSize();
+      const tileSize = this.getTileSize();
 
       tile.style.width = tileSize.x + 1 + "px";
       tile.style.height = tileSize.y + 1 + "px";
