@@ -239,7 +239,7 @@ function renderKommuneProgress(
   colorFunction = getProgressColor
 ) {
   kommuneLayer.eachLayer((layer) => {
-    const kommuneId = layer.feature.properties.ref;
+    const kommuneId = layer.feature.properties.kommunenummer;
     const kommune = kommuner[kommuneId] ?? kommuner[Number(kommuneId)];
     if (kommune) {
       const progress = kommune.progress;
@@ -599,8 +599,8 @@ function parseHTMLTableElem(tableEl) {
  * @property {array[]|number[]} features.geometry.coordinates
  * @property {string} features.geometry.type
  * @property {object} features.properties
- * @property {string} features.properties.name
- * @property {string} features.properties.ref
+ * @property {string} features.properties.kommunenavn
+ * @property {string} features.properties.kommunenummer
  * @property {string} features.type
  * @property {string} type
  */

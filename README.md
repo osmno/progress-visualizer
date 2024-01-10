@@ -12,6 +12,12 @@ Visualizing progress of various projects in the norwegian OSM-mapping community
 
 ## Update kommuner.geojson
 
+### Using kartverket api:
+
+1. Download geojson from https://api.kartverket.no/kommuneinfo/v1/kommuner/illustrasjonskart
+
+### Fetch from overpass turbo and simplify (not needed)
+
 1. Go to Overpass Turbo and run https://overpass-turbo.eu/#
 
 ```Overpass
