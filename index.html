@@ -4,16 +4,17 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Visualizing progress of various projects in the Norwegian OSM mapping community" />
     <title>OSM-no-progress</title>
     <link
       rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
     <script
-      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
 
@@ -25,12 +26,12 @@
         OSM Norge progress<button
           id="selector-dropdown-toggle"
           aria-label="toggle project selector window"
-          onclick="document.getElementById('selector-dropdown').classList.toggle('invisible'); document.getElementById('selector-dropdown-toggle').classList.toggle('flip')"
+          aria-expanded="false"
         >
           ▲
         </button>
       </h1>
-      <div id="selector-dropdown">
+      <div id="selector-dropdown" class="invisible">
         <br />
         <label for="progress-selector">Project:</label>
         <select name="progress-selector" id="progress-selector">

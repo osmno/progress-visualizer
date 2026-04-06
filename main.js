@@ -63,8 +63,8 @@ async function init() {
       new Option(
         option.label,
         option.id,
-        defaultSelected.id == option.id,
-        defaultSelected.id == option.id
+        defaultSelected.id === option.id,
+        defaultSelected.id === option.id
       )
     );
   });
@@ -79,7 +79,7 @@ async function init() {
 
   if (
     Array.from(progressSelectorRef.options).some(
-      (opt) => opt.value == selectedProject
+      (opt) => opt.value === selectedProject
     )
   ) {
     progressSelectorRef.value = selectedProject;
@@ -91,6 +91,15 @@ async function init() {
 
   document.getElementById("map-selector").addEventListener("change", (e) => {
     setTileLayer(e.target.value);
+  });
+
+  const dropdownToggle = document.getElementById("selector-dropdown-toggle");
+  const dropdown = document.getElementById("selector-dropdown");
+  dropdownToggle.addEventListener("click", () => {
+    dropdown.classList.toggle("invisible");
+    dropdownToggle.classList.toggle("flip");
+    const isExpanded = dropdownToggle.getAttribute("aria-expanded") === "true";
+    dropdownToggle.setAttribute("aria-expanded", String(!isExpanded));
   });
 
   handleProgressSelectorChange(progressSelectorRef.value, kommuneLayer);
@@ -132,30 +141,34 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
     kommuneLayer.resetStyle();
     document.getElementById("error").innerHTML = "Laster...";
     switch (progressToVisualize) {
-      case "building":
+      case "building": {
         const buildingImportProgress = await getBuildingImportProgress();
-        console.debug(buildingImportProgress);
         renderKommuneProgress(kommuneLayer, buildingImportProgress);
         break;
-      case "nvdb":
+      }
+      case "nvdb": {
         const progress = await getNVDBManglerProgress();
         renderKommuneProgress(kommuneLayer, progress, getNVDBProgressColor);
         break;
-      case "n50":
+      }
+      case "n50": {
         const n50Progress = await getN50Progress();
         renderKommuneProgress(kommuneLayer, n50Progress, (num) =>
           getProgressColor(num, "#444")
         );
         break;
-      case "ssr":
+      }
+      case "ssr": {
         const ssrProgress = await getSSRProgress();
         renderKommuneProgress(kommuneLayer, ssrProgress, ssrProgressColor);
         break;
-      case "barnehagefakta":
+      }
+      case "barnehagefakta": {
         const barnehagefaktaProgress = await getBarnehagefaktaProgress();
         renderKommuneProgress(kommuneLayer, barnehagefaktaProgress);
         break;
-      case "highwayTagUpdate":
+      }
+      case "highwayTagUpdate": {
         const highwayTagUpdateProgress = await getHighwayTagUpdateProgress();
         renderKommuneProgress(
           kommuneLayer,
@@ -163,6 +176,7 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
           highwayProgressColor
         );
         break;
+      }
       default:
         console.error(`${progressToVisualize} is not supported`);
         break;
@@ -173,15 +187,6 @@ async function handleProgressSelectorChange(progressToVisualize, kommuneLayer) {
     document.getElementById("error").innerHTML = error.message;
     console.error(error);
   }
-}
-
-/**
- *
- * @param {{[Id: string]: Object}} progress
- */
-function renderProgress(progress) {
-  const progressEl = document.querySelector("#progress");
-  progressEl.textContent = progress;
 }
 
 /**
@@ -203,7 +208,7 @@ function renderKommuner(kommuner) {
  *
  * @param {Object} progress
  * @param {string} progressColumn
- * @param {bool} reverseScale
+ * @param {boolean} reverseScale
  * @return {{[id: string]: KommuneProgress}}
  */
 function getKommuneProgress(progress, progressColumn, reverseScale = false) {
@@ -229,6 +234,16 @@ function getKommuneProgress(progress, progressColumn, reverseScale = false) {
 }
 
 /**
+ * @param {string} text
+ * @returns {string}
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
  * @param {L.geoJson} kommuneLayer
  * @param {{[id: string]: KommuneProgress}} kommuner
  * @param {function(number): string} colorFunction
@@ -250,9 +265,9 @@ function renderKommuneProgress(
       });
       layer.bindPopup(`
       <div class="popup">
-        <h2>${kommune.Municipality}</h2>
+        <h2>${escapeHtml(kommune.Municipality)}</h2>
         ${Object.keys(kommune)
-          .map((key) => `<p><b>${key}:</b> ${kommune[key]}</p>`)
+          .map((key) => `<p><b>${escapeHtml(key)}:</b> ${escapeHtml(String(kommune[key]))}</p>`)
           .join("")}
       </div>
       `);
@@ -340,6 +355,7 @@ async function getKommuner() {
   if (resp.ok) {
     return resp.json();
   }
+  throw new Error("Failed to load kommuner data");
 }
 
 /**
@@ -447,7 +463,7 @@ async function getN50Progress() {
 
       const newKystlinje =
         kommune["Progresjon_kystlinje(ikke_alltid_relevant)"];
-      const exisitingKystlinje =
+      const existingKystlinje =
         parsedKommuner[kommuneId]["Progresjon_kystlinje(ikke_alltid_relevant)"];
 
       parsedKommuner[kommuneId] = {
@@ -456,7 +472,7 @@ async function getN50Progress() {
         Progresjon_vann: getAvg([newVann, existingVann]),
         "Progresjon_kystlinje(ikke_alltid_relevant)": getAvg([
           newKystlinje,
-          exisitingKystlinje,
+          existingKystlinje,
         ]),
       };
       parsedKommuner[kommuneId].progress = parsedKommuner[kommuneId][
@@ -508,7 +524,7 @@ function getAvg(nums) {
       total += num;
     } else {
       const numNumberMatches = num.match(/\d+/g);
-      if (num == "N/A") numberOfNotApplicable++;
+      if (num === "N/A") numberOfNotApplicable++;
       const numAsNumber =
         numNumberMatches && numNumberMatches.length > 0
           ? Number(numNumberMatches[0])

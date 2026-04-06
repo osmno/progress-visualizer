@@ -2,7 +2,7 @@
 
 Visualizing progress of various projects in the norwegian OSM-mapping community
 
-### Made possible with:
+## Made possible with:
 
 - Norwegian mapping community https://wiki.openstreetmap.org/wiki/Norway
 - OpenStreetMap https://www.openstreetmap.org/
