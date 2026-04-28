@@ -537,29 +537,37 @@ function getAvg(nums) {
 }
 
 /**
+ * Fetch a progress page and parse its first <table> into JSON.
  *
- * @param {string} url
+ * For wiki.openstreetmap.org we hit the MediaWiki action API with origin=*
+ * for CORS. For other hosts we fetch the page directly — works as long as
+ * the host sends Access-Control-Allow-Origin (GitHub Pages does).
+ *
+ * @param {string} hostname
  * @param {string} path
  * @returns
  */
-async function convertWikiToJson(url, path) {
-  const resp = await fetch(
-    `https://production.osmno-cors-proxy.mathiash98.workers.dev/${path}?url=${url}`
-  );
-
-  if (resp.ok) {
-    // parse html table and get percentage for each kommune
-    const progressDocumentText = await resp.text();
-    const progressHtml = new DOMParser().parseFromString(
-      progressDocumentText,
-      "text/html"
-    );
-    const progressTable = progressHtml.querySelector("table");
-    const tableAsJson = parseHTMLTableElem(progressTable);
-    return tableAsJson;
+async function convertWikiToJson(hostname, path) {
+  let html;
+  if (hostname === "wiki.openstreetmap.org") {
+    const page = path.replace(/^wiki\//, "");
+    const apiUrl = `https://${hostname}/w/api.php?action=parse&page=${encodeURIComponent(
+      page
+    )}&prop=text&format=json&origin=*`;
+    const resp = await fetch(apiUrl);
+    if (!resp.ok) throw new Error(resp.statusText);
+    const json = await resp.json();
+    if (json.error) throw new Error(json.error.info);
+    html = json.parse.text["*"];
   } else {
-    throw new Error(resp.statusText);
+    const resp = await fetch(`https://${hostname}/${path}`);
+    if (!resp.ok) throw new Error(resp.statusText);
+    html = await resp.text();
   }
+
+  const progressHtml = new DOMParser().parseFromString(html, "text/html");
+  const progressTable = progressHtml.querySelector("table");
+  return parseHTMLTableElem(progressTable);
 }
 
 /**
